@@ -38,6 +38,24 @@ const saveDataJson = () => { // функція, щоб зберегти у фа�
 	fsp.writeFile(fullDataFileName, JSON.stringify(dataJson));
 }
 
+/**
+ * @openapi
+ * /notes/{note}:
+ *   get:
+ *     description: Відповідає за одержання нотатки.
+ *     parameters:
+ *       - name: note
+ *         in: path
+ *         description: Назва нотатки
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Текст нотатки був успішно одержаний.
+ *       400:
+ *         description: Нотатки не знайдено.
+ */
 app.get("/notes/:note", (req, res) => {
 	const note_name = req.params.note;
 	const note = dataJson.find((nt) => nt.name == note_name); // знайти нотатку в списку
@@ -49,6 +67,32 @@ app.get("/notes/:note", (req, res) => {
 	}
 });
 
+
+/**
+ * @openapi
+ * /notes/{note}:
+ *   put:
+ *     description: Відповідає за оновлення нотатки.
+ *     parameters:
+ *       - name: note
+ *         in: path
+ *         description: Назва нотатки
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         text/plain:
+ *           schema:
+ *             type: string
+ *             description: Текст нотатки
+ *     responses:
+ *       200:
+ *         description: Текст нотатки був вдало змінений.
+ *       400:
+ *         description: Якщо не було знайдено відповідну нотатку.
+ */
 app.use(express.text()); // мідлвар для обробки сирого тексту
 app.put("/notes/:note", (req, res) => {
 	const note_name = req.params.note; 
@@ -66,6 +110,24 @@ app.put("/notes/:note", (req, res) => {
 		res.sendStatus(404);
 });
 
+/**
+ * @openapi
+ * /notes/{note}:
+ *   delete:
+ *     description: Відповідає за видалення нотатки.
+ *     parameters:
+ *       - name: note
+ *         in: path
+ *         description: Назва нотатки
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       201:
+ *         description: Нотатка була вдало видалена.
+ *       400:
+ *         description: Нотатки для видалення не знайдено.
+ */
 app.delete("/notes/:note", (req, res) => {
 	const note_name = req.params.note;
 	const filtered = dataJson.filter((element) => element.name != note_name); //фільтрує список від всіх нотаток, чиє ім'я note_name
@@ -78,12 +140,44 @@ app.delete("/notes/:note", (req, res) => {
 	res.end();
 });
 
+/**
+ * @openapi
+ * /notes:
+ *   get:
+ *     description: Відповідає за одержання JSON з нотатками.
+ *     responses:
+ *       200:
+ *         description: JSON з нотатками був успішно одержаний.
+ */
 app.get("/notes", (req, res) => {
 	res.type("application/json");
 	res.end(JSON.stringify(dataJson));	
 });
 
-
+/**
+ * @openapi
+ * /write:
+ *   post:
+ *     description: Відповідає за додавання нової нотатки.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               note_name:
+ *                 type: string
+ *                 description: назва нотатки
+ *               note:
+ *                 type: string
+ *                 description: текст нотатки
+ *     responses:
+ *       201:
+ *         description: У разі вдалого створення нотатки.
+ *       400:
+ *         description: Некоректний запит у разі існування такої нотатки.
+ */
 app.use(multer().none()); // мідлвар для роботи з multipart/form-data, метод none() то значить файли відсутні, працюємо тільки з текстом
 app.post("/write", (req, res) => {
 	if (dataJson.find(element => req.body.note_name == element.name)) // якщо в списку вже є така нотатка
@@ -99,6 +193,17 @@ app.post("/write", (req, res) => {
 	res.end();
 });
 
+/**
+ * @openapi
+ * /UploadForm.html:
+ *   get:
+ *     description: Відповідає за одержання форми для додавання нової нотатки.
+ *     responses:
+ *       200:
+ *         description: Форма з нотатками була успішно одержана.
+ *       500:
+ *         description: Форма з нотатками загубилась у часі та просторі.
+ */
 app.get("/UploadForm.html", (req, res) => {
 	fsp.readFile("./UploadForm.html")
 		.then((result) => {
@@ -110,6 +215,26 @@ app.get("/UploadForm.html", (req, res) => {
 		});
 });
 //app.use(express.static(path.join(__dirname))); // вбудований мідлвар, що дозволяє напряму звертатись до файлів в поточній теці
+
+//<swagger>
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+
+const options_swagger = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Моя крута документація для нотаток',
+      version: '1.0.0',
+    },
+  },
+  apis: ['./main.js'],
+};
+
+const openapiSpecification = swaggerJsdoc(options_swagger);
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiSpecification));
+//</swagger>
+
 
 function main() {
 	dataText = fsp.readFile(fullDataFileName)
