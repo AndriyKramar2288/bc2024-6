@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
-    "start": "nodemon main.js --host \"localhost\" --port \"8000\" --cashe \".\" --ignore \"info.json\"",
+    "start": "npx nodemon -L --inspect=0.0.0.0 main.js --host \"0.0.0.0\" --port \"8000\" --cashe \".\" --ignore \"info.json\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

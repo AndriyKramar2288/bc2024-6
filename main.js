@@ -122,7 +122,8 @@ function main() {
 	})
 	.finally(() => {
 		app.listen(port, host, () => {
-		console.log(`Сервер запущено за адресою http://${host}:${port}`);
+		const host_display = host === "0.0.0.0" ? "localhost" : host;
+		console.log(`Сервер запущено за адресою http://${host_display}:${port}`);
 		}); 
 	});
 }
